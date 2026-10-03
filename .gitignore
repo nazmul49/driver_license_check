@@ -7,3 +7,4 @@ hosted-page/test-results
 hosted-page/playwright-report
 *.log
 hosted-page/e2e/.auth/
+deploy/.env

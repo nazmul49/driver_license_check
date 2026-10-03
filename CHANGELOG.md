@@ -2,6 +2,13 @@
 
 All notable changes. Milestones follow SPEC.md section 16.
 
+## Deployment (2026-10-03)
+
+- `deploy/`: single-VM production stack (Caddy with automatic HTTPS, API, worker, MySQL 8 on an internal network, `/metrics` blocked at the proxy, log rotation), `init-env.sh` secret generator that never overwrites set values, and `backup.sh` (MySQL dump plus image volume, 7 days).
+- `docs/deploy.md`: Oracle Cloud Always Free ARM VM walkthrough.
+- `npm run env:init` for local `server/.env` setup.
+- Fix: the Docker image now creates `server/var/images` owned by `node`, so a fresh images volume is writable (uploads failed with a root-owned volume).
+
 ## M7 Hardening (2026-10-03)
 
 - Security headers on every response (nosniff, no-referrer, COOP/CORP, HSTS when enabled), `Cache-Control: no-store` on all API responses, nonce-based CSP on the hosted page with `frame-ancestors 'none'` by default and `Permissions-Policy: camera=(self)`.

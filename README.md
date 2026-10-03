@@ -20,6 +20,8 @@ npm run dev:worker -w server              # worker (OCR, webhooks, expiry, reten
 
 Full stack in containers: `docker compose up --build` (uses `server/.env`).
 
+Deploying on a free Oracle Cloud VM with HTTPS: see `docs/deploy.md`.
+
 ## Tests
 
 ```sh

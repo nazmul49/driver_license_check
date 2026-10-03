@@ -1,0 +1,99 @@
+# Production stack for a single VM (see docs/deploy.md).
+#   docker compose -f deploy/compose.yml --env-file deploy/.env up -d --build
+# Only Caddy is reachable from outside (80/443). MySQL, the API and worker metrics stay on the
+# internal network.
+name: dlc
+
+x-app: &app
+  build:
+    context: ..
+    dockerfile: Dockerfile
+  image: dlc-app:latest
+  env_file: .env
+  environment:
+    NODE_ENV: production
+    TZ: UTC
+    PUBLIC_BASE_URL: https://${DLC_DOMAIN:?set DLC_DOMAIN in deploy/.env}
+    DB_HOST: mysql
+    DB_PORT: 3307
+    DB_USER: dlc
+    DB_PASSWORD: ${MYSQL_PASSWORD:?set MYSQL_PASSWORD in deploy/.env}
+    DB_NAME: dlc
+  volumes:
+    - images:/app/server/var/images
+  depends_on:
+    mysql:
+      condition: service_healthy
+  restart: unless-stopped
+  logging: &logging
+    driver: json-file
+    options:
+      max-size: 10m
+      max-file: '5'
+
+services:
+  caddy:
+    image: caddy:2
+    ports:
+      - '80:80'
+      - '443:443'
+      - '443:443/udp'
+    environment:
+      DLC_DOMAIN: ${DLC_DOMAIN}
+      ACME_EMAIL: ${ACME_EMAIL:?set ACME_EMAIL in deploy/.env}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    depends_on:
+      - api
+    restart: unless-stopped
+    logging: *logging
+
+  api:
+    <<: *app
+    command: ['npm', 'run', 'start', '-w', 'server']
+    healthcheck:
+      test:
+        [
+          'CMD',
+          'node',
+          '-e',
+          "fetch('http://127.0.0.1:3000/v1/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
+        ]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+
+  worker:
+    <<: *app
+    command: ['npm', 'run', 'start:worker', '-w', 'server']
+
+  mysql:
+    image: mysql:8.0
+    command:
+      [
+        '--character-set-server=utf8mb4',
+        '--collation-server=utf8mb4_unicode_ci',
+        '--default-time-zone=+00:00',
+      ]
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?set MYSQL_ROOT_PASSWORD in deploy/.env}
+      MYSQL_DATABASE: dlc
+      MYSQL_USER: dlc
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    volumes:
+      - mysql-data:/var/lib/mysql
+    healthcheck:
+      test: ['CMD-SHELL', 'mysqladmin ping -h 127.0.0.1 -udlc -p"$$MYSQL_PASSWORD"']
+      interval: 5s
+      timeout: 5s
+      retries: 30
+    restart: unless-stopped
+    logging: *logging
+
+volumes:
+  mysql-data:
+  images:
+  caddy-data:
+  caddy-config:

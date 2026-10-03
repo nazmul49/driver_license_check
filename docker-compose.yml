@@ -28,7 +28,10 @@ services:
     command: ['npm', 'run', 'start', '-w', 'server']
     env_file: server/.env
     environment:
+      # server/.env is written for running on the host (MySQL on localhost:3307). Inside the
+      # compose network MySQL is the "mysql" service on its container port 3306.
       DB_HOST: mysql
+      DB_PORT: 3306
       TZ: UTC
     ports:
       - '3000:3000'
@@ -43,7 +46,10 @@ services:
     command: ['npm', 'run', 'start:worker', '-w', 'server']
     env_file: server/.env
     environment:
+      # server/.env is written for running on the host (MySQL on localhost:3307). Inside the
+      # compose network MySQL is the "mysql" service on its container port 3306.
       DB_HOST: mysql
+      DB_PORT: 3306
       TZ: UTC
     volumes:
       - images:/app/server/var/images

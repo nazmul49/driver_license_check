@@ -1,0 +1,20 @@
+# Caddy terminates TLS with an automatic Let's Encrypt certificate for DLC_DOMAIN and proxies
+# to the API. HSTS and the hosted page CSP are set by the API itself.
+{
+	email {$ACME_EMAIL}
+}
+
+{$DLC_DOMAIN} {
+	encode zstd gzip
+
+	# Metrics stay internal. Scrape the api and worker containers over the Docker network.
+	@metrics path /metrics /metrics/*
+	respond @metrics 404
+
+	request_body {
+		# Uploads are capped at 10 MB by the API; leave headroom for multipart overhead.
+		max_size 12MB
+	}
+
+	reverse_proxy api:3000
+}

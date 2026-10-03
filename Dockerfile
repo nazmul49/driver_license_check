@@ -13,7 +13,11 @@ ENV NODE_ENV=production TZ=UTC
 # Fonts are only needed for generating synthetic fixtures; OCR does not need them.
 WORKDIR /app
 COPY --from=build /app /app
-RUN npm prune --omit=dev && chown -R node:node /app/server
+# The image store directory must exist in the image so a fresh named volume mounted there
+# inherits node ownership; otherwise the volume is root-owned and uploads fail.
+RUN npm prune --omit=dev \
+  && mkdir -p /app/server/var/images \
+  && chown -R node:node /app/server
 USER node
 EXPOSE 3000
 CMD ["npm", "run", "start", "-w", "server"]
