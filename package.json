@@ -1,0 +1,36 @@
+{
+  "name": "driver-license-check",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "shared",
+    "server",
+    "hosted-page"
+  ],
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "build": "npm run build -w hosted-page",
+    "typecheck": "npm run typecheck -w shared && npm run typecheck -w server && npm run typecheck -w hosted-page",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "test": "npm run test -w shared && npm run test -w server",
+    "test:e2e": "npm run test:e2e -w hosted-page",
+    "env:init": "node scripts/init-env.mjs",
+    "migrate": "npm run migrate -w server",
+    "seed": "npm run seed -w server",
+    "audit:prod": "node scripts/audit.mjs"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.0",
+    "eslint": "^9.39.0",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-vue": "^10.4.0",
+    "globals": "^16.4.0",
+    "prettier": "^3.6.2",
+    "typescript": "~5.9.3",
+    "typescript-eslint": "^8.46.0"
+  }
+}

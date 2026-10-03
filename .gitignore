@@ -1,0 +1,9 @@
+node_modules
+dist
+coverage
+.env
+server/var
+hosted-page/test-results
+hosted-page/playwright-report
+*.log
+hosted-page/e2e/.auth/

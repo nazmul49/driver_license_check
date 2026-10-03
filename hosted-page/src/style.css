@@ -1,0 +1,42 @@
+@import 'tailwindcss';
+
+@theme {
+  /* Overridden per integrator from script through the CSSOM (see lib/theme.ts). */
+  --color-primary: #1d4ed8;
+  --color-on-primary: #ffffff;
+}
+
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    @apply bg-gray-50 text-gray-900 antialiased;
+    font-family:
+      system-ui,
+      -apple-system,
+      'Segoe UI',
+      Roboto,
+      'Helvetica Neue',
+      Arial,
+      sans-serif;
+  }
+
+  :focus-visible {
+    outline: 3px solid #111827;
+    outline-offset: 2px;
+  }
+}
+
+@utility btn {
+  @apply inline-flex min-h-12 w-full items-center justify-center rounded-lg px-5 py-3 text-base font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-50;
+}
+
+@utility btn-primary {
+  @apply btn bg-primary text-on-primary hover:brightness-110;
+}
+
+@utility btn-secondary {
+  @apply btn border-2 border-gray-700 bg-white text-gray-900 hover:bg-gray-100;
+}

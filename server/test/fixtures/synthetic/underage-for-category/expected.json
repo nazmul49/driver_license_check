@@ -1,0 +1,27 @@
+{
+  "name": "underage-for-category",
+  "accuracy": true,
+  "fields": {
+    "surname": "NORDMANN",
+    "given_names": "OLA",
+    "date_of_birth": "2005-04-12",
+    "place_of_birth": "OSLO",
+    "issue_date": "2021-06-01",
+    "expiry_date": "2036-06-01",
+    "issuing_authority": "STATENS VEGVESEN",
+    "license_number": "12345678901",
+    "categories": [
+      {
+        "code": "B",
+        "issue_date": "2021-06-01",
+        "expiry_date": "2036-06-01"
+      }
+    ]
+  },
+  "expect_fail": [
+    "AGE_AT_ISSUE_PLAUSIBLE",
+    "CATEGORY_DATES_CONSISTENT"
+  ],
+  "expect_warn": [],
+  "expect_decision": "review"
+}

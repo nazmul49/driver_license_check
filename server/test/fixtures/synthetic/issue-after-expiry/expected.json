@@ -1,0 +1,26 @@
+{
+  "name": "issue-after-expiry",
+  "accuracy": true,
+  "fields": {
+    "surname": "NORDMANN",
+    "given_names": "OLA",
+    "date_of_birth": "1990-04-12",
+    "place_of_birth": "OSLO",
+    "issue_date": "2026-06-01",
+    "expiry_date": "2025-06-01",
+    "issuing_authority": "STATENS VEGVESEN",
+    "license_number": "12345678901",
+    "categories": [
+      {
+        "code": "B",
+        "issue_date": "2008-05-10",
+        "expiry_date": "2025-06-01"
+      }
+    ]
+  },
+  "expect_fail": [
+    "ISSUE_BEFORE_EXPIRY"
+  ],
+  "expect_warn": [],
+  "expect_decision": "rejected"
+}

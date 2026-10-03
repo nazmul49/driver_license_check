@@ -1,0 +1,29 @@
+{
+  "name": "valid-multi-category",
+  "accuracy": true,
+  "fields": {
+    "surname": "HANSEN",
+    "given_names": "KARI ANNE",
+    "date_of_birth": "1985-11-03",
+    "place_of_birth": "BERGEN",
+    "issue_date": "2019-03-15",
+    "expiry_date": "2034-03-15",
+    "issuing_authority": "STATENS VEGVESEN",
+    "license_number": "98765432109",
+    "categories": [
+      {
+        "code": "B",
+        "issue_date": "2003-12-20",
+        "expiry_date": "2034-03-15"
+      },
+      {
+        "code": "BE",
+        "issue_date": "2010-05-04",
+        "expiry_date": "2034-03-15"
+      }
+    ]
+  },
+  "expect_fail": [],
+  "expect_warn": [],
+  "expect_decision": "approved"
+}

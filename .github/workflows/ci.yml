@@ -1,0 +1,102 @@
+# CI for driver-license-check (SPEC 16 M7).
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint:
+    name: Lint, typecheck, audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run format:check
+      - run: npm run typecheck
+      # Dependency audit (SPEC 12): high or critical in production dependencies fails the
+      # build, except reviewed, time-boxed exceptions listed in scripts/audit.mjs.
+      - run: npm run audit:prod
+
+  test:
+    name: Unit and integration tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_DATABASE: dlc_test
+          MYSQL_USER: dlc
+          MYSQL_PASSWORD: dlc
+          MYSQL_ROOT_PASSWORD: root
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -udlc -pdlc"
+          --health-interval=5s --health-timeout=5s --health-retries=30
+    env:
+      TEST_DB_HOST: 127.0.0.1
+      TEST_DB_PORT: 3306
+      TEST_DB_NAME: dlc_test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run test -w shared
+      # Includes the OCR accuracy baseline, no-network and log redaction tests, and the
+      # coverage gate (90%+ lines on checks/, decision/ and the state machine).
+      - run: npm run test:coverage -w server
+
+  e2e:
+    name: Hosted page e2e (Playwright)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_DATABASE: dlc_e2e
+          MYSQL_USER: dlc
+          MYSQL_PASSWORD: dlc
+          MYSQL_ROOT_PASSWORD: root
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -udlc -pdlc"
+          --health-interval=5s --health-timeout=5s --health-retries=30
+    env:
+      E2E_DB_PORT: 3306
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+        working-directory: hosted-page
+      - run: npm run test:e2e
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report
+          path: hosted-page/playwright-report
+          retention-days: 7

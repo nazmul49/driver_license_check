@@ -1,0 +1,26 @@
+{
+  "name": "dob-after-issue",
+  "accuracy": true,
+  "fields": {
+    "surname": "NORDMANN",
+    "given_names": "OLA",
+    "date_of_birth": "2022-04-12",
+    "place_of_birth": "OSLO",
+    "issue_date": "2021-06-01",
+    "expiry_date": "2036-06-01",
+    "issuing_authority": "STATENS VEGVESEN",
+    "license_number": "12345678901",
+    "categories": [
+      {
+        "code": "B",
+        "issue_date": "2008-05-10",
+        "expiry_date": "2036-06-01"
+      }
+    ]
+  },
+  "expect_fail": [
+    "DOB_BEFORE_ISSUE"
+  ],
+  "expect_warn": [],
+  "expect_decision": "rejected"
+}

@@ -1,0 +1,8 @@
+node_modules
+**/node_modules
+**/dist
+server/var
+server/.env
+coverage
+hosted-page/test-results
+hosted-page/playwright-report

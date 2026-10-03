@@ -1,0 +1,4 @@
+{
+  "comment": "Minimum field-level accuracy on the synthetic fixture set. CI fails below this. Raise it when accuracy improves; never lower it without a reason in CHANGELOG.md.",
+  "min_field_accuracy": 0.97
+}

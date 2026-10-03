@@ -1,0 +1,10 @@
+node_modules
+dist
+coverage
+server/tessdata
+server/test/fixtures
+server/var
+hosted-page/test-results
+hosted-page/playwright-report
+package-lock.json
+SPEC.md
