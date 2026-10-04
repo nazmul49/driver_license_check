@@ -1,0 +1,20 @@
+{
+  "mcpServers": {
+    "github": {
+      "type": "http",
+      "url": "https://api.githubcopilot.com/mcp/"
+    },
+    "mysql": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "@benborla29/mcp-server-mysql@2.0.9"],
+      "env": {
+        "MYSQL_HOST": "${DLC_MCP_DB_HOST:-127.0.0.1}",
+        "MYSQL_PORT": "${DLC_MCP_DB_PORT:-3307}",
+        "MYSQL_USER": "${DLC_MCP_DB_USER:-dlc}",
+        "MYSQL_PASS": "${DLC_MCP_DB_PASSWORD:-dlc}",
+        "MYSQL_DB": "${DLC_MCP_DB_NAME:-dlc}"
+      }
+    }
+  }
+}

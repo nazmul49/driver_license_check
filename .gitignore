@@ -8,3 +8,6 @@ hosted-page/playwright-report
 *.log
 hosted-page/e2e/.auth/
 deploy/.env
+
+# claude
+.claude/settings.local.json
