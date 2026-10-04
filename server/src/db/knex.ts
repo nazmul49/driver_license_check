@@ -36,10 +36,6 @@ export function createDb(config: Config, overrides: Partial<Knex.Config> = {}): 
         conn.query("SET time_zone = '+00:00'", (err) => done(err, conn));
       },
     },
-    migrations: {
-      directory: new URL('./migrations', import.meta.url).pathname,
-      loadExtensions: ['.ts'],
-    },
     ...overrides,
   });
 }

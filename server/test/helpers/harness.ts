@@ -10,7 +10,8 @@ import {
   type ContainerOverrides,
   type Deps,
 } from '../../src/container.js';
-import { createDb, type Db } from '../../src/db/knex.js';
+import type { Db } from '../../src/db/knex.js';
+import { applySchema } from '../../src/db/schema.js';
 import { FixedClock } from '../../src/lib/clock.js';
 import { createLogger } from '../../src/lib/logger.js';
 import { MemoryImageStore } from '../../src/modules/images/image-store.js';
@@ -29,17 +30,10 @@ const TABLES = [
   'integrator',
 ];
 
-let migrated: Promise<void> | null = null;
+let migrated: Promise<unknown> | null = null;
 
-async function migrateOnce(config: Config): Promise<void> {
-  migrated ??= (async () => {
-    const db = createDb(config);
-    try {
-      await db.migrate.latest();
-    } finally {
-      await db.destroy();
-    }
-  })();
+function migrateOnce(config: Config): Promise<unknown> {
+  migrated ??= applySchema(config);
   return migrated;
 }
 

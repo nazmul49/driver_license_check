@@ -2,6 +2,7 @@ FROM node:22-bookworm-slim AS build
 WORKDIR /app
 COPY package.json package-lock.json ./
 COPY shared/package.json shared/
+COPY database/package.json database/
 COPY server/package.json server/
 COPY hosted-page/package.json hosted-page/
 RUN npm ci

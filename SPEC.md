@@ -138,7 +138,7 @@ driver_license_check/
       main.ts                   # api entry
       worker.ts                 # job worker entry
       config/                   # env parsing
-      db/                       # knex instance, migrations/, seeds/
+      db/                       # knex instance, seeds/ (schema lives in database/)
       modules/
         sessions/               # routes, controller, service, repository, state machine
         hosted/                 # hosted page API (token auth)
@@ -521,7 +521,7 @@ All tables `utf8mb4_unicode_ci`, InnoDB. `id` columns are `CHAR(26)` ULIDs unles
 `audit_log`
 - `id` BIGINT, `actor_type` (`integrator`,`end_user`,`system`,`admin`), `actor_id`, `action`, `session_id`, `ip_hash`, `user_agent`, `request_id`, `created_at`. No personal data from the document in this table.
 
-Migrations: Knex migrations in `server/src/db/migrations`, run with `npm run migrate`. Seeds create one test integrator and print its test API key.
+Migrations: plain SQL scripts in the `database/` project (`1-structure.sql`, then `AA-migration-release-X.Y.Z.sql`, tracked in a `db_version` table), built into the local Docker database image and applied to existing databases with `npm run migrate`. This replaced the original Knex migration; see `database/README.md`. Seeds create one test integrator and print its test API key.
 
 ---
 

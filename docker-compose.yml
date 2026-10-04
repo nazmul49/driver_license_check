@@ -1,28 +1,12 @@
-services:
-  mysql:
-    image: mysql:8.0
-    command:
-      [
-        '--character-set-server=utf8mb4',
-        '--collation-server=utf8mb4_unicode_ci',
-        '--default-time-zone=+00:00',
-      ]
-    environment:
-      MYSQL_ROOT_PASSWORD: root
-      MYSQL_DATABASE: dlc
-      MYSQL_USER: dlc
-      MYSQL_PASSWORD: dlc
-    ports:
-      - '${MYSQL_HOST_PORT:-3307}:3306'
-    volumes:
-      - mysql-data:/var/lib/mysql
-      - ./docker/mysql-init.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
-    healthcheck:
-      test: ['CMD', 'mysqladmin', 'ping', '-h', '127.0.0.1', '-udlc', '-pdlc']
-      interval: 5s
-      timeout: 5s
-      retries: 30
+# Local stack. The MySQL service comes from the database project (database/docker-compose.yml),
+# built from database/Dockerfile with the schema in it. Same project name as that file, so
+# database/build_db.sh and this file manage the same container and volume.
+name: dlc-dev
 
+include:
+  - database/docker-compose.yml
+
+services:
   api:
     build: .
     command: ['npm', 'run', 'start', '-w', 'server']
@@ -58,5 +42,4 @@ services:
         condition: service_healthy
 
 volumes:
-  mysql-data:
   images:

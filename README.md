@@ -5,11 +5,12 @@ Self-hosted driver license verification. Integrators create a session, send the 
 - Build spec: `SPEC.md`
 - Integrator guide: `docs/integration.md`
 - Changes per milestone: `CHANGELOG.md`
+- Database schema and how to change it: `database/README.md`
 
 ## Quick start (local)
 
 ```sh
-docker compose up -d mysql                # MySQL 8 on localhost:3307
+docker compose up -d mysql                # MySQL 8 on localhost:3307, schema from database/
 npm install
 npm run env:init                          # creates server/.env, generates any empty secrets
 npm run migrate && npm run seed           # prints a test API key once
