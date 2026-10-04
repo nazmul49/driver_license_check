@@ -1,7 +1,7 @@
 import 'dotenv/config';
 import { parseArgs } from 'node:util';
 import { loadConfigOrExit } from './config/index.js';
-import { createContainer } from './container.js';
+import { createContainer, deps, disposeContainer } from './container.js';
 
 /**
  * Admin CLI (SPEC 2: no admin UI in v1).
@@ -28,7 +28,7 @@ const { positionals, values } = parseArgs({
 
 const config = loadConfigOrExit();
 const container = createContainer(config);
-const c = container.cradle;
+const c = deps(container);
 const need = (v: string | undefined, flag: string): string => {
   if (!v) throw new Error(`--${flag} is required`);
   return v;
@@ -94,5 +94,5 @@ try {
   console.error((err as Error).message);
   process.exitCode = 1;
 } finally {
-  await container.dispose();
+  await disposeContainer(container);
 }

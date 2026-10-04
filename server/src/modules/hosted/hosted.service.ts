@@ -1,4 +1,6 @@
-import type { Cradle } from '../../container.js';
+import { inject, injectable } from 'inversify';
+import { TOKENS } from '../../di/tokens.js';
+import type { Config } from '../../config/index.js';
 import {
   CONSENT_VERSION,
   type HostedSessionInfo,
@@ -29,6 +31,7 @@ export function buildRedirectUrl(returnUrl: string, sessionId: string, status: s
   return url.toString();
 }
 
+@injectable()
 export class HostedService {
   private readonly uow: UnitOfWork;
   private readonly sessions: SessionRepository;
@@ -37,17 +40,14 @@ export class HostedService {
   private readonly clock: Clock;
   private readonly opts: { desktopHandoff: boolean };
 
-  constructor({
-    uow,
-    sessionRepository,
-    integratorRepository,
-    imageService,
-    clock,
-    config,
-  }: Pick<
-    Cradle,
-    'uow' | 'sessionRepository' | 'integratorRepository' | 'imageService' | 'clock' | 'config'
-  >) {
+  constructor(
+    @inject(TOKENS.uow) uow: UnitOfWork,
+    @inject(TOKENS.sessionRepository) sessionRepository: SessionRepository,
+    @inject(TOKENS.integratorRepository) integratorRepository: IntegratorRepository,
+    @inject(TOKENS.imageService) imageService: ImageService,
+    @inject(TOKENS.clock) clock: Clock,
+    @inject(TOKENS.config) config: Config,
+  ) {
     this.uow = uow;
     this.sessions = sessionRepository;
     this.integrators = integratorRepository;

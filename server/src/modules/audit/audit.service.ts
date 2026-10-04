@@ -1,4 +1,6 @@
-import type { Cradle } from '../../container.js';
+import { inject, injectable } from 'inversify';
+import { TOKENS } from '../../di/tokens.js';
+import type { Config } from '../../config/index.js';
 import type { Clock } from '../../lib/clock.js';
 import { hmacHex } from '../../lib/crypto.js';
 import type { AuditRepository } from './audit.repository.js';
@@ -16,16 +18,17 @@ export interface AuditEntry {
 }
 
 /** Audit trail. Holds no document data; the IP is stored as a keyed hash (SPEC 11). */
+@injectable()
 export class AuditService {
   private readonly repo: AuditRepository;
   private readonly clock: Clock;
   private readonly secret: string;
 
-  constructor({
-    auditRepository,
-    clock,
-    config,
-  }: Pick<Cradle, 'auditRepository' | 'clock' | 'config'>) {
+  constructor(
+    @inject(TOKENS.auditRepository) auditRepository: AuditRepository,
+    @inject(TOKENS.clock) clock: Clock,
+    @inject(TOKENS.config) config: Config,
+  ) {
     this.repo = auditRepository;
     this.clock = clock;
     this.secret = config.HMAC_SECRET;

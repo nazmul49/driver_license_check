@@ -1,3 +1,5 @@
+import { inject, injectable } from 'inversify';
+import { TOKENS } from '../../di/tokens.js';
 import type { SessionStatus } from '@dlc/shared';
 import type { Db } from '../../db/knex.js';
 import type { StatusWriter } from './state-machine.js';
@@ -35,12 +37,9 @@ export interface NewSession {
   expires_at: Date;
 }
 
+@injectable()
 export class SessionRepository implements StatusWriter {
-  private readonly db: Db;
-
-  constructor({ db }: { db: Db }) {
-    this.db = db;
-  }
+  constructor(@inject(TOKENS.db) private readonly db: Db) {}
 
   async insert(s: NewSession, now: Date): Promise<void> {
     const { requirements, ...rest } = s;

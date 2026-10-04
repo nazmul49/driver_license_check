@@ -1,6 +1,8 @@
+import { inject, injectable } from 'inversify';
+import { TOKENS } from '../../di/tokens.js';
+import type { Config } from '../../config/index.js';
 import type { ImageSide } from '@dlc/shared';
 import sharp from 'sharp';
-import type { Cradle } from '../../container.js';
 import { emptyDocument, type ExtractedDocument, type ExtractedField } from '../checks/index.js';
 import type { CountryProfile } from '../countries/country-profile.js';
 import { detectCountry } from '../countries/detect-country.js';
@@ -50,18 +52,23 @@ const untimed: StepTimer = (_name, fn) => fn();
  * The image and OCR part of the pipeline (SPEC 6.1 steps 2 to 10) with no database access, so
  * it can be measured on the fixture set and run under a network block in tests.
  */
+@injectable()
 export class DocumentAnalyzer {
   private readonly ocr: () => OcrEngine;
   private readonly profiles: CountryProfile[];
   private readonly minConfidence: number;
   private readonly aspectTolerance: number;
 
-  constructor(c: Pick<Cradle, 'ocrEngine' | 'countryProfiles' | 'config'>) {
+  constructor(
+    @inject(TOKENS.ocrEngineProvider) ocrEngineProvider: () => OcrEngine,
+    @inject(TOKENS.countryProfiles) countryProfiles: CountryProfile[],
+    @inject(TOKENS.config) config: Config,
+  ) {
     // Resolved lazily: the API process never touches OCR.
-    this.ocr = () => c.ocrEngine;
-    this.profiles = c.countryProfiles;
-    this.minConfidence = c.config.FIELD_MIN_CONFIDENCE;
-    this.aspectTolerance = c.config.QUALITY_ASPECT_TOLERANCE;
+    this.ocr = ocrEngineProvider;
+    this.profiles = countryProfiles;
+    this.minConfidence = config.FIELD_MIN_CONFIDENCE;
+    this.aspectTolerance = config.QUALITY_ASPECT_TOLERANCE;
   }
 
   /** Steps 2 to 4: normalize, card detection, quality metrics. */

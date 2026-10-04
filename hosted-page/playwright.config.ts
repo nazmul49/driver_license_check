@@ -34,8 +34,10 @@ export default defineConfig({
   ],
   webServer: {
     // The API runs with NODE_ENV=development (no Secure cookie over http); the page is still
-    // built for production so the suite tests the bundle that ships.
-    command: 'NODE_ENV=production npm run build -w hosted-page && npx tsx server/src/main.ts',
+    // built for production so the suite tests the bundle that ships. tsx reads the tsconfig in
+    // the working directory, so point it at the server one (it enables parameter decorators).
+    command:
+      'NODE_ENV=production npm run build -w hosted-page && npx tsx --tsconfig server/tsconfig.json server/src/main.ts',
     cwd: repoRoot,
     env: serverEnv,
     url: `http://127.0.0.1:${API_PORT}/v1/health`,

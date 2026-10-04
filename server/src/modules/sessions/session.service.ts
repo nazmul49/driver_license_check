@@ -1,4 +1,6 @@
-import type { Cradle } from '../../container.js';
+import { inject, injectable } from 'inversify';
+import { TOKENS } from '../../di/tokens.js';
+import type { Config } from '../../config/index.js';
 import { createHash } from 'node:crypto';
 import {
   RESULT_STATEMENT_NOT_PASSED,
@@ -64,6 +66,7 @@ export function toPublicFields(doc: ExtractedDocument): DocumentFields {
   };
 }
 
+@injectable()
 export class SessionService {
   private readonly sessions: SessionRepository;
   private readonly results: ResultRepository;
@@ -72,17 +75,14 @@ export class SessionService {
   private readonly clock: Clock;
   private readonly opts: { publicBaseUrl: string; allowHttp: boolean };
 
-  constructor({
-    sessionRepository,
-    resultRepository,
-    purgeService,
-    encryptor,
-    clock,
-    config,
-  }: Pick<
-    Cradle,
-    'sessionRepository' | 'resultRepository' | 'purgeService' | 'encryptor' | 'clock' | 'config'
-  >) {
+  constructor(
+    @inject(TOKENS.sessionRepository) sessionRepository: SessionRepository,
+    @inject(TOKENS.resultRepository) resultRepository: ResultRepository,
+    @inject(TOKENS.purgeService) purgeService: PurgeService,
+    @inject(TOKENS.encryptor) encryptor: Encryptor,
+    @inject(TOKENS.clock) clock: Clock,
+    @inject(TOKENS.config) config: Config,
+  ) {
     this.sessions = sessionRepository;
     this.results = resultRepository;
     this.purge = purgeService;

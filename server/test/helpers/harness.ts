@@ -4,9 +4,11 @@ import { createApp } from '../../src/app.js';
 import type { Config } from '../../src/config/index.js';
 import {
   createContainer,
+  deps,
+  disposeContainer,
   type Container,
   type ContainerOverrides,
-  type Cradle,
+  type Deps,
 } from '../../src/container.js';
 import { createDb, type Db } from '../../src/db/knex.js';
 import { FixedClock } from '../../src/lib/clock.js';
@@ -62,8 +64,8 @@ export class LogCapture extends Writable {
 export interface Harness {
   config: Config;
   container: Container;
-  /** Resolved dependencies (container.cradle). */
-  c: Cradle;
+  /** Resolved dependencies (deps(container)). */
+  c: Deps;
   app: Express;
   clock: FixedClock;
   store: MemoryImageStore;
@@ -76,7 +78,7 @@ export interface Harness {
 
 export async function createHarness(
   overrides: Record<string, string> = {},
-  integratorOverrides: Partial<Parameters<Cradle['integratorService']['createIntegrator']>[0]> = {},
+  integratorOverrides: Partial<Parameters<Deps['integratorService']['createIntegrator']>[0]> = {},
   containerOverrides: Omit<ContainerOverrides, 'clock' | 'logger' | 'imageStore'> = {},
 ): Promise<Harness> {
   const config = testConfig(overrides);
@@ -91,7 +93,7 @@ export async function createHarness(
     logger,
     ...containerOverrides,
   });
-  const c = container.cradle;
+  const c = deps(container);
   await truncateAll(c.db);
   const { integrator, webhookSecret } = await c.integratorService.createIntegrator({
     name: 'acme',
@@ -112,6 +114,6 @@ export async function createHarness(
     integrator,
     apiKey: key,
     webhookSecret,
-    close: () => container.dispose(),
+    close: () => disposeContainer(container),
   };
 }

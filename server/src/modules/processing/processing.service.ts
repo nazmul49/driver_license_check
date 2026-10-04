@@ -1,4 +1,5 @@
-import type { Cradle } from '../../container.js';
+import { inject, injectable } from 'inversify';
+import { TOKENS } from '../../di/tokens.js';
 import type { Config } from '../../config/index.js';
 import type { UnitOfWork } from '../../db/unit-of-work.js';
 import { utcToday, type Clock } from '../../lib/clock.js';
@@ -35,6 +36,7 @@ export class ProcessingTimeoutError extends Error {}
  * propagate so the job is retried; problems with the images complete the session with a
  * decision instead.
  */
+@injectable()
 export class ProcessingService {
   private readonly uow: UnitOfWork;
   private readonly sessions: SessionRepository;
@@ -50,34 +52,31 @@ export class ProcessingService {
   private readonly metrics: WorkerMetrics;
 
   constructor(
-    c: Pick<
-      Cradle,
-      | 'uow'
-      | 'sessionRepository'
-      | 'integratorRepository'
-      | 'imageService'
-      | 'imageRepository'
-      | 'resultRepository'
-      | 'encryptor'
-      | 'clock'
-      | 'logger'
-      | 'config'
-      | 'documentAnalyzer'
-      | 'workerMetrics'
-    >,
+    @inject(TOKENS.uow) uow: UnitOfWork,
+    @inject(TOKENS.sessionRepository) sessionRepository: SessionRepository,
+    @inject(TOKENS.integratorRepository) integratorRepository: IntegratorRepository,
+    @inject(TOKENS.imageService) imageService: ImageService,
+    @inject(TOKENS.imageRepository) imageRepository: ImageRepository,
+    @inject(TOKENS.resultRepository) resultRepository: ResultRepository,
+    @inject(TOKENS.encryptor) encryptor: Encryptor,
+    @inject(TOKENS.clock) clock: Clock,
+    @inject(TOKENS.logger) logger: Logger,
+    @inject(TOKENS.config) config: Config,
+    @inject(TOKENS.documentAnalyzer) documentAnalyzer: DocumentAnalyzer,
+    @inject(TOKENS.workerMetrics) workerMetrics: WorkerMetrics,
   ) {
-    this.uow = c.uow;
-    this.sessions = c.sessionRepository;
-    this.integrators = c.integratorRepository;
-    this.images = c.imageService;
-    this.imageRepo = c.imageRepository;
-    this.results = c.resultRepository;
-    this.encryptor = c.encryptor;
-    this.clock = c.clock;
-    this.logger = c.logger;
-    this.config = c.config;
-    this.analyzer = c.documentAnalyzer;
-    this.metrics = c.workerMetrics;
+    this.uow = uow;
+    this.sessions = sessionRepository;
+    this.integrators = integratorRepository;
+    this.images = imageService;
+    this.imageRepo = imageRepository;
+    this.results = resultRepository;
+    this.encryptor = encryptor;
+    this.clock = clock;
+    this.logger = logger;
+    this.config = config;
+    this.analyzer = documentAnalyzer;
+    this.metrics = workerMetrics;
   }
 
   async process(sessionId: string): Promise<void> {

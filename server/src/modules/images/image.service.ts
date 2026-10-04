@@ -1,4 +1,6 @@
-import type { Cradle } from '../../container.js';
+import { inject, injectable } from 'inversify';
+import { TOKENS } from '../../di/tokens.js';
+import type { Config } from '../../config/index.js';
 import { createHash } from 'node:crypto';
 import type { ImageSide } from '@dlc/shared';
 import sharp from 'sharp';
@@ -28,6 +30,7 @@ export function sniffImageType(buf: Buffer): DetectedMime | null {
   return null;
 }
 
+@injectable()
 export class ImageService {
   private readonly repo: ImageRepository;
   private readonly store: ImageStore;
@@ -35,13 +38,13 @@ export class ImageService {
   private readonly clock: Clock;
   private readonly maxPixels: number;
 
-  constructor({
-    imageRepository,
-    imageStore,
-    encryptor,
-    clock,
-    config,
-  }: Pick<Cradle, 'imageRepository' | 'imageStore' | 'encryptor' | 'clock' | 'config'>) {
+  constructor(
+    @inject(TOKENS.imageRepository) imageRepository: ImageRepository,
+    @inject(TOKENS.imageStore) imageStore: ImageStore,
+    @inject(TOKENS.encryptor) encryptor: Encryptor,
+    @inject(TOKENS.clock) clock: Clock,
+    @inject(TOKENS.config) config: Config,
+  ) {
     this.repo = imageRepository;
     this.store = imageStore;
     this.encryptor = encryptor;

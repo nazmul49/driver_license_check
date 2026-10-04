@@ -1,11 +1,11 @@
 import 'dotenv/config';
 import { loadConfigOrExit } from '../config/index.js';
-import { createContainer } from '../container.js';
+import { createContainer, deps, disposeContainer } from '../container.js';
 
 /** Creates one test integrator (if missing) and prints a fresh test API key (SPEC 11). */
 const config = loadConfigOrExit();
 const container = createContainer(config);
-const c = container.cradle;
+const c = deps(container);
 try {
   let integrator = await c.integratorRepository.findByName('test-integrator');
   let webhookSecret: string | null = null;
@@ -26,5 +26,5 @@ try {
   if (webhookSecret) console.log(`Webhook secret (shown once): ${webhookSecret}`);
   console.log(`Test API key (shown once): ${key.key}`);
 } finally {
-  await container.dispose();
+  await disposeContainer(container);
 }

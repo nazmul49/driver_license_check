@@ -3,16 +3,8 @@
 // expiry date; an expired exception fails the build so it gets reviewed again.
 import { execFileSync } from 'node:child_process';
 
-const EXCEPTIONS = {
-  'GHSA-vfj7-8cjw-p6xm': {
-    package: 'braces',
-    reason:
-      'Reached only via awilix -> fast-glob, used by awilix.loadModules(). This codebase never ' +
-      'calls loadModules (all registrations are explicit in server/src/container.ts), so no ' +
-      'attacker-controlled glob reaches braces. No patched braces release exists yet.',
-    expires: '2027-01-31',
-  },
-};
+// Shape: { 'GHSA-xxxx-xxxx-xxxx': { package, reason, expires: 'YYYY-MM-DD' } }
+const EXCEPTIONS = {};
 
 let raw;
 try {

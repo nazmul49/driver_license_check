@@ -1,3 +1,5 @@
+import { inject, injectable } from 'inversify';
+import { TOKENS } from '../../di/tokens.js';
 import type { Db } from '../../db/knex.js';
 
 export interface AuditRow {
@@ -11,12 +13,9 @@ export interface AuditRow {
   created_at: Date;
 }
 
+@injectable()
 export class AuditRepository {
-  private readonly db: Db;
-
-  constructor({ db }: { db: Db }) {
-    this.db = db;
-  }
+  constructor(@inject(TOKENS.db) private readonly db: Db) {}
 
   async insert(row: AuditRow): Promise<void> {
     await this.db('audit_log').insert(row);

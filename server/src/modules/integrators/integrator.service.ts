@@ -1,4 +1,6 @@
-import type { Cradle } from '../../container.js';
+import { inject, injectable } from 'inversify';
+import { TOKENS } from '../../di/tokens.js';
+import type { Config } from '../../config/index.js';
 import { randomBytes } from 'node:crypto';
 import type { Clock } from '../../lib/clock.js';
 import { hmacHex, safeEqual, type Encryptor } from '../../lib/crypto.js';
@@ -20,18 +22,19 @@ export interface AuthenticatedKey {
   mode: 'live' | 'test';
 }
 
+@injectable()
 export class IntegratorService {
   private readonly repo: IntegratorRepository;
   private readonly encryptor: Encryptor;
   private readonly pepper: string;
   private readonly clock: Clock;
 
-  constructor({
-    integratorRepository,
-    encryptor,
-    clock,
-    config,
-  }: Pick<Cradle, 'integratorRepository' | 'encryptor' | 'clock' | 'config'>) {
+  constructor(
+    @inject(TOKENS.integratorRepository) integratorRepository: IntegratorRepository,
+    @inject(TOKENS.encryptor) encryptor: Encryptor,
+    @inject(TOKENS.clock) clock: Clock,
+    @inject(TOKENS.config) config: Config,
+  ) {
     this.repo = integratorRepository;
     this.encryptor = encryptor;
     this.clock = clock;

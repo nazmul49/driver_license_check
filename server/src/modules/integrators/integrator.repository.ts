@@ -1,3 +1,5 @@
+import { inject, injectable } from 'inversify';
+import { TOKENS } from '../../di/tokens.js';
 import type { Db } from '../../db/knex.js';
 import type { ApiKeyRow, Integrator } from './integrator.types.js';
 
@@ -39,12 +41,9 @@ export interface NewIntegrator {
   retention_days: number;
 }
 
+@injectable()
 export class IntegratorRepository {
-  private readonly db: Db;
-
-  constructor({ db }: { db: Db }) {
-    this.db = db;
-  }
+  constructor(@inject(TOKENS.db) private readonly db: Db) {}
 
   async findById(id: string): Promise<Integrator | null> {
     const row = await this.db('integrator').where({ id }).first();

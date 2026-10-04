@@ -1,3 +1,5 @@
+import { inject, injectable } from 'inversify';
+import { TOKENS } from '../di/tokens.js';
 import type { Db } from './knex.js';
 import { AuditRepository } from '../modules/audit/audit.repository.js';
 import { ImageRepository } from '../modules/images/image.repository.js';
@@ -19,13 +21,13 @@ export interface Repositories {
 
 export function createRepositories(db: Db): Repositories {
   return {
-    integrators: new IntegratorRepository({ db }),
-    sessions: new SessionRepository({ db }),
-    images: new ImageRepository({ db }),
-    results: new ResultRepository({ db }),
-    jobs: new JobRepository({ db }),
-    audit: new AuditRepository({ db }),
-    webhooks: new WebhookRepository({ db }),
+    integrators: new IntegratorRepository(db),
+    sessions: new SessionRepository(db),
+    images: new ImageRepository(db),
+    results: new ResultRepository(db),
+    jobs: new JobRepository(db),
+    audit: new AuditRepository(db),
+    webhooks: new WebhookRepository(db),
   };
 }
 
@@ -33,12 +35,9 @@ export function createRepositories(db: Db): Repositories {
  * Runs work in one database transaction with repositories bound to it. Services receive this
  * instead of a raw connection, so repositories stay the only code that touches the database.
  */
+@injectable()
 export class UnitOfWork {
-  private readonly db: Db;
-
-  constructor({ db }: { db: Db }) {
-    this.db = db;
-  }
+  constructor(@inject(TOKENS.db) private readonly db: Db) {}
 
   run<T>(work: (repos: Repositories) => Promise<T>): Promise<T> {
     return this.db.transaction((trx) => work(createRepositories(trx)));
