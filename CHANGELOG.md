@@ -4,6 +4,7 @@ All notable changes. Milestones follow SPEC.md section 16.
 
 ## Unreleased
 
+- Schema moved out of the server into its own `database/` project, set up like the Sharebox `database` project: `Dockerfile` (mysql:8.0 with `dlc.cnf` and the scripts in `docker-entrypoint-initdb.d`), `docker-compose.yml` (included by the root compose, project name now `dlc-dev`), `build_db.sh`, and `scripts/0-dlc_init_setup.sql`, `1-structure.sql` (release 1.0.0) plus future `AA-migration-release-X.Y.Z.sql` files tracked in `db_version`. A runner (`@dlc/database`) applies pending releases to existing databases under a MySQL named lock; `npm run migrate`, the test harness and e2e setup use it. The Knex migration and Knex migrations config are removed. Databases created by the old Knex migration are adopted as release 1.0.0 without changes.
 - Dependency injection moved from awilix to inversify 8 (`@injectable()` classes, explicit `@inject(TOKENS.x)` constructor parameters, tokens and the `Deps` type in `server/src/di/tokens.ts`). `container.cradle` is replaced by `deps(container)` and `container.dispose()` by `disposeContainer(container)`. `experimentalDecorators` is enabled in `server/tsconfig.json`; e2e scripts started from the repo root now pass `--tsconfig server/tsconfig.json` to tsx.
 - Removed the `braces` audit exception: it was only reachable through awilix, which is no longer a dependency.
 

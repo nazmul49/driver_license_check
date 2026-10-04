@@ -1,0 +1,21 @@
+# Local development database, built from this project's Dockerfile. The root docker-compose.yml
+# includes this file, so `docker compose up -d mysql` from the repo root starts the same service.
+# Both files use the project name dlc-dev so they share one container and one volume.
+name: dlc-dev
+
+services:
+  mysql:
+    build: .
+    image: dlc-database:dev
+    ports:
+      - '${MYSQL_HOST_PORT:-3307}:3306'
+    volumes:
+      - mysql-data:/var/lib/mysql
+    healthcheck:
+      test: ['CMD', 'mysqladmin', 'ping', '-h', '127.0.0.1', '-udlc', '-pdlc']
+      interval: 5s
+      timeout: 5s
+      retries: 30
+
+volumes:
+  mysql-data:

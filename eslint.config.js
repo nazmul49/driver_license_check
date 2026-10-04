@@ -33,7 +33,13 @@ export default tseslint.config(
     },
   },
   {
-    files: ['server/scripts/**', 'server/src/cli.ts', 'server/src/db/seed.ts', '**/*.mjs'],
+    files: [
+      'server/scripts/**',
+      'server/src/cli.ts',
+      'server/src/db/seed.ts',
+      'database/src/cli.ts',
+      '**/*.mjs',
+    ],
     rules: { 'no-console': 'off' },
   },
   prettier,

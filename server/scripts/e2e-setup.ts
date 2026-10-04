@@ -1,5 +1,5 @@
 /**
- * Prepares the dedicated e2e database for the hosted page Playwright suite: runs migrations,
+ * Prepares the dedicated e2e database for the hosted page Playwright suite: applies the schema scripts,
  * empties every table, creates the e2e integrators and writes their test API keys to
  * hosted-page/e2e/.auth/e2e.json (gitignored). Refuses to run against any database other than
  * one whose name ends in "_e2e", so it can never wipe the dev or unit test databases.
@@ -10,6 +10,7 @@ import { fileURLToPath } from 'node:url';
 import { loadConfig } from '../src/config/index.js';
 import { createContainer, deps, disposeContainer } from '../src/container.js';
 import { createDb } from '../src/db/knex.js';
+import { applySchema } from '../src/db/schema.js';
 
 const TABLES = [
   'audit_log',
@@ -32,9 +33,9 @@ if (!config.DB_NAME.endsWith('_e2e')) {
   process.exit(1);
 }
 
+await applySchema(config);
 const db = createDb(config);
 try {
-  await db.migrate.latest();
   const conn = await db.client.acquireConnection();
   try {
     // FOREIGN_KEY_CHECKS is per connection, so the truncates must share one connection.

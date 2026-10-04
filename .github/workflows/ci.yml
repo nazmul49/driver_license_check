@@ -32,6 +32,31 @@ jobs:
       # build, except reviewed, time-boxed exceptions listed in scripts/audit.mjs.
       - run: npm run audit:prod
 
+  database:
+    name: Database image and migrations
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      # Builds database/Dockerfile and lets the entrypoint run every script, as build_db.sh does.
+      - run: docker compose -f database/docker-compose.yml up -d --build --wait
+      # The runner must agree with the image: every release is already in db_version.
+      - name: Runner finds nothing pending
+        env:
+          DB_HOST: 127.0.0.1
+          DB_PORT: 3307
+          DB_USER: dlc
+          DB_PASSWORD: dlc
+          DB_NAME: dlc
+        run: npm run migrate -w database 2>&1 | tee migrate.log && grep -q 'Already up to date' migrate.log
+      - if: failure()
+        run: docker compose -f database/docker-compose.yml logs mysql
+
   test:
     name: Unit and integration tests
     runs-on: ubuntu-latest

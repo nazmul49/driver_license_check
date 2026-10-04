@@ -4,6 +4,7 @@
   "type": "module",
   "workspaces": [
     "shared",
+    "database",
     "server",
     "hosted-page"
   ],
@@ -12,7 +13,7 @@
   },
   "scripts": {
     "build": "npm run build -w hosted-page",
-    "typecheck": "npm run typecheck -w shared && npm run typecheck -w server && npm run typecheck -w hosted-page",
+    "typecheck": "npm run typecheck -w shared && npm run typecheck -w database && npm run typecheck -w server && npm run typecheck -w hosted-page",
     "lint": "eslint .",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
