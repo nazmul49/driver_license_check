@@ -1,3 +1,5 @@
+import { inject, injectable } from 'inversify';
+import { TOKENS } from '../../di/tokens.js';
 import type { ImageSide } from '@dlc/shared';
 import type { Db } from '../../db/knex.js';
 
@@ -20,12 +22,9 @@ export interface SessionImage {
   deleted_at: Date | null;
 }
 
+@injectable()
 export class ImageRepository {
-  private readonly db: Db;
-
-  constructor({ db }: { db: Db }) {
-    this.db = db;
-  }
+  constructor(@inject(TOKENS.db) private readonly db: Db) {}
 
   async upsert(img: Omit<SessionImage, 'deleted_at'>): Promise<void> {
     await this.db('session_image')

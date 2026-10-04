@@ -1,11 +1,5 @@
-import {
-  InjectionMode,
-  asClass,
-  asFunction,
-  asValue,
-  createContainer as createAwilix,
-  type AwilixContainer,
-} from 'awilix';
+import { Container } from 'inversify';
+import { TOKENS, type Deps } from './di/tokens.js';
 import type { Config } from './config/index.js';
 import { createDb, type Db } from './db/knex.js';
 import { UnitOfWork } from './db/unit-of-work.js';
@@ -27,7 +21,7 @@ import { SessionRepository } from './modules/sessions/session.repository.js';
 import { SessionService } from './modules/sessions/session.service.js';
 import { ExpiryService } from './modules/sessions/expiry.service.js';
 import { JobRunner } from './modules/jobs/job-runner.js';
-import { createWorkerMetrics, type WorkerMetrics } from './modules/metrics/metrics.js';
+import { createWorkerMetrics } from './modules/metrics/metrics.js';
 import type { OcrEngine } from './modules/ocr/ocr.types.js';
 import { listCountryProfiles, type CountryProfile } from './modules/countries/index.js';
 import { ProcessingService } from './modules/processing/processing.service.js';
@@ -35,48 +29,8 @@ import { DocumentAnalyzer } from './modules/processing/document-analyzer.js';
 import { WebhookRepository } from './modules/webhooks/webhook.repository.js';
 import { WebhookService, type HttpFetch } from './modules/webhooks/webhook.service.js';
 
-/**
- * Everything the container can resolve. Classes declare what they need with
- * `Pick<Cradle, ...>` in their constructor, so dependencies are explicit and type checked.
- */
-export interface Cradle {
-  // Infrastructure
-  config: Config;
-  db: Db;
-  uow: UnitOfWork;
-  clock: Clock;
-  logger: Logger;
-  encryptor: Encryptor;
-  imageStore: ImageStore;
-  /** Set by the worker after the Tesseract pool starts. */
-  ocrEngine: OcrEngine;
-  /** Outbound HTTP for webhooks only. Processing never makes network calls. */
-  httpFetch: HttpFetch;
-  workerMetrics: WorkerMetrics;
-  /** Country profiles are configuration (SPEC 6.4); tests inject their own. */
-  countryProfiles: CountryProfile[];
-  // Repositories: the only code that touches the database
-  integratorRepository: IntegratorRepository;
-  sessionRepository: SessionRepository;
-  imageRepository: ImageRepository;
-  resultRepository: ResultRepository;
-  jobRepository: JobRepository;
-  auditRepository: AuditRepository;
-  webhookRepository: WebhookRepository;
-  // Services: business logic
-  integratorService: IntegratorService;
-  sessionService: SessionService;
-  hostedService: HostedService;
-  imageService: ImageService;
-  purgeService: PurgeService;
-  auditService: AuditService;
-  documentAnalyzer: DocumentAnalyzer;
-  processingService: ProcessingService;
-  webhookService: WebhookService;
-  expiryService: ExpiryService;
-  // Worker
-  jobRunner: JobRunner;
-}
+export { TOKENS, type Deps } from './di/tokens.js';
+export type { Container };
 
 export interface ContainerOverrides {
   db?: Db;
@@ -88,66 +42,94 @@ export interface ContainerOverrides {
   countryProfiles?: CountryProfile[];
 }
 
-export type Container = AwilixContainer<Cradle>;
-
 /**
- * Composition root (awilix, PROXY injection mode, no decorators). Layers, bottom up:
- * repositories -> services -> routes. Routes only parse input with Zod and call services.
- * Everything is a singleton: services are stateless and transactions go through UnitOfWork.
- * Tests pass overrides (clock, logger, image store) or call container.register() to swap one.
+ * Composition root (inversify). Layers, bottom up: repositories -> services -> routes. Routes
+ * only parse input with Zod and call services. Everything is a singleton: services are
+ * stateless and transactions go through UnitOfWork. Classes are `@injectable()` and name each
+ * constructor dependency with `@inject(TOKENS.<key>)`; tokens are explicit because tsx/esbuild
+ * does not emit decorator type metadata. Tests pass overrides (clock, logger, image store) or
+ * call `container.rebind(TOKENS.<key>)` to swap one before it is first resolved.
  */
 export function createContainer(config: Config, o: ContainerOverrides = {}): Container {
-  const container = createAwilix<Cradle>({ injectionMode: InjectionMode.PROXY, strict: true });
+  const container = new Container({ defaultScope: 'Singleton' });
+  const value = <K extends keyof Deps>(key: K, v: Deps[K]) =>
+    container.bind<Deps[K]>(TOKENS[key]).toConstantValue(v);
 
-  container.register({
-    config: asValue(config),
-    db: o.db
-      ? asValue(o.db)
-      : asFunction(({ config: c }: Pick<Cradle, 'config'>) => createDb(c))
-          .singleton()
-          .disposer((db) => db.destroy()),
-    uow: asClass(UnitOfWork).singleton(),
-    clock: asValue(o.clock ?? systemClock),
-    logger: asValue(o.logger ?? createLogger(config.LOG_LEVEL)),
-    encryptor: asFunction(
-      ({ config: c }: Pick<Cradle, 'config'>) => new Encryptor(c.encryption),
-    ).singleton(),
-    imageStore: o.imageStore
-      ? asValue(o.imageStore)
-      : asFunction(
-          ({ config: c }: Pick<Cradle, 'config'>) => new FsImageStore(c.IMAGE_STORE_DIR),
-        ).singleton(),
+  value('config', config);
+  if (o.db) value('db', o.db);
+  else {
+    container
+      .bind<Db>(TOKENS.db)
+      .toDynamicValue(() => createDb(config))
+      .onDeactivation((db) => db.destroy());
+  }
+  container.bind(TOKENS.uow).to(UnitOfWork);
+  value('clock', o.clock ?? systemClock);
+  value('logger', o.logger ?? createLogger(config.LOG_LEVEL));
+  container.bind(TOKENS.encryptor).toDynamicValue(() => new Encryptor(config.encryption));
+  if (o.imageStore) value('imageStore', o.imageStore);
+  else {
+    container
+      .bind<ImageStore>(TOKENS.imageStore)
+      .toDynamicValue(() => new FsImageStore(config.IMAGE_STORE_DIR));
+  }
 
-    ocrEngine: o.ocrEngine
-      ? asValue(o.ocrEngine)
-      : asFunction((): OcrEngine => {
-          throw new Error('OCR engine not initialized (only the worker registers it)');
-        }),
-    httpFetch: asValue(o.httpFetch ?? globalThis.fetch.bind(globalThis)),
-    workerMetrics: asFunction(createWorkerMetrics).singleton(),
-    countryProfiles: asValue(o.countryProfiles ?? listCountryProfiles()),
+  if (o.ocrEngine) value('ocrEngine', o.ocrEngine);
+  else {
+    container
+      .bind<OcrEngine>(TOKENS.ocrEngine)
+      .toDynamicValue(() => {
+        throw new Error('OCR engine not initialized (only the worker registers it)');
+      })
+      .inTransientScope();
+  }
+  container
+    .bind<Deps['ocrEngineProvider']>(TOKENS.ocrEngineProvider)
+    .toConstantValue(() => container.get<OcrEngine>(TOKENS.ocrEngine));
+  value('httpFetch', o.httpFetch ?? globalThis.fetch.bind(globalThis));
+  container.bind(TOKENS.workerMetrics).toDynamicValue(createWorkerMetrics);
+  value('countryProfiles', o.countryProfiles ?? listCountryProfiles());
 
-    integratorRepository: asClass(IntegratorRepository).singleton(),
-    sessionRepository: asClass(SessionRepository).singleton(),
-    imageRepository: asClass(ImageRepository).singleton(),
-    resultRepository: asClass(ResultRepository).singleton(),
-    jobRepository: asClass(JobRepository).singleton(),
-    auditRepository: asClass(AuditRepository).singleton(),
-    webhookRepository: asClass(WebhookRepository).singleton(),
+  container.bind(TOKENS.integratorRepository).to(IntegratorRepository);
+  container.bind(TOKENS.sessionRepository).to(SessionRepository);
+  container.bind(TOKENS.imageRepository).to(ImageRepository);
+  container.bind(TOKENS.resultRepository).to(ResultRepository);
+  container.bind(TOKENS.jobRepository).to(JobRepository);
+  container.bind(TOKENS.auditRepository).to(AuditRepository);
+  container.bind(TOKENS.webhookRepository).to(WebhookRepository);
 
-    integratorService: asClass(IntegratorService).singleton(),
-    sessionService: asClass(SessionService).singleton(),
-    hostedService: asClass(HostedService).singleton(),
-    imageService: asClass(ImageService).singleton(),
-    purgeService: asClass(PurgeService).singleton(),
-    auditService: asClass(AuditService).singleton(),
-    documentAnalyzer: asClass(DocumentAnalyzer).singleton(),
-    processingService: asClass(ProcessingService).singleton(),
-    webhookService: asClass(WebhookService).singleton(),
-    expiryService: asClass(ExpiryService).singleton(),
+  container.bind(TOKENS.integratorService).to(IntegratorService);
+  container.bind(TOKENS.sessionService).to(SessionService);
+  container.bind(TOKENS.hostedService).to(HostedService);
+  container.bind(TOKENS.imageService).to(ImageService);
+  container.bind(TOKENS.purgeService).to(PurgeService);
+  container.bind(TOKENS.auditService).to(AuditService);
+  container.bind(TOKENS.documentAnalyzer).to(DocumentAnalyzer);
+  container.bind(TOKENS.processingService).to(ProcessingService);
+  container.bind(TOKENS.webhookService).to(WebhookService);
+  container.bind(TOKENS.expiryService).to(ExpiryService);
 
-    jobRunner: asClass(JobRunner).singleton(),
-  });
+  container.bind(TOKENS.jobRunner).to(JobRunner);
 
   return container;
+}
+
+/**
+ * Typed, lazy view of the container: `deps(container).sessionService` resolves on property
+ * access, so a binding swapped with rebind() is picked up as long as it was not resolved yet.
+ */
+export function deps(container: Container): Deps {
+  return new Proxy({} as Deps, {
+    get: (_target, key) => {
+      if (typeof key !== 'string' || !(key in TOKENS)) {
+        throw new Error(`Unknown dependency: ${String(key)}`);
+      }
+      return container.get(TOKENS[key as keyof Deps]);
+    },
+  });
+}
+
+/** Runs deactivation hooks (closes the database pool) and drops all bindings. */
+export function disposeContainer(container: Container): Promise<void> {
+  return container.unbindAllAsync();
 }

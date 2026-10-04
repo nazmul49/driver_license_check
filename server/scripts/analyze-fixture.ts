@@ -1,7 +1,6 @@
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
-import { asValue } from 'awilix';
-import { createContainer } from '../src/container.js';
+import { createContainer, deps, disposeContainer, TOKENS } from '../src/container.js';
 import { TesseractPool } from '../src/modules/ocr/ocr-pool.js';
 import { testConfig } from '../test/helpers/config.js';
 import { SPEC_EXAMPLE_PROFILE } from '../test/helpers/documents.js';
@@ -11,8 +10,8 @@ const names = process.argv.slice(2);
 const config = testConfig();
 const container = createContainer(config, { countryProfiles: [SPEC_EXAMPLE_PROFILE] });
 const pool = await TesseractPool.create({ size: 1, tessdataDir: config.TESSDATA_DIR });
-container.register({ ocrEngine: asValue(pool) });
-const analyzer = container.cradle.documentAnalyzer;
+container.rebind(TOKENS.ocrEngine).toConstantValue(pool);
+const analyzer = deps(container).documentAnalyzer;
 for (const name of names) {
   const dir = path.resolve('test/fixtures/synthetic', name);
   const t0 = performance.now();
@@ -32,4 +31,4 @@ for (const name of names) {
   if (process.env.RAW) console.log(ex.rawText.front, '\n---\n', ex.rawText.back);
 }
 await pool.terminate();
-await container.dispose();
+await disposeContainer(container);

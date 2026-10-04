@@ -1,3 +1,5 @@
+import { inject, injectable } from 'inversify';
+import { TOKENS } from '../../di/tokens.js';
 import type { Db } from '../../db/knex.js';
 
 export interface WebhookDeliveryRow {
@@ -16,12 +18,9 @@ export interface WebhookDeliveryRow {
   created_at: Date;
 }
 
+@injectable()
 export class WebhookRepository {
-  private readonly db: Db;
-
-  constructor({ db }: { db: Db }) {
-    this.db = db;
-  }
+  constructor(@inject(TOKENS.db) private readonly db: Db) {}
 
   async insert(row: WebhookDeliveryRow): Promise<void> {
     await this.db('webhook_delivery').insert(row);

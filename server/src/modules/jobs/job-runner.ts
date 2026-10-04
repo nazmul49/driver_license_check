@@ -1,5 +1,6 @@
+import { inject, injectable } from 'inversify';
+import { TOKENS } from '../../di/tokens.js';
 import { hostname } from 'node:os';
-import type { Cradle } from '../../container.js';
 import type { Config } from '../../config/index.js';
 import type { Clock } from '../../lib/clock.js';
 import type { Logger } from '../../lib/logger.js';
@@ -19,6 +20,7 @@ const HOUR = 60 * MINUTE;
  * retries system errors with backoff, and runs the periodic jobs (expiry, stale job recovery,
  * retention purge). Several worker processes can run side by side.
  */
+@injectable()
 export class JobRunner {
   readonly workerId = `${hostname()}:${process.pid}`;
   private readonly jobs: JobRepository;
@@ -35,28 +37,25 @@ export class JobRunner {
   private loops: Promise<void>[] = [];
 
   constructor(
-    c: Pick<
-      Cradle,
-      | 'jobRepository'
-      | 'processingService'
-      | 'webhookService'
-      | 'expiryService'
-      | 'purgeService'
-      | 'clock'
-      | 'logger'
-      | 'config'
-      | 'workerMetrics'
-    >,
+    @inject(TOKENS.jobRepository) jobRepository: JobRepository,
+    @inject(TOKENS.processingService) processingService: ProcessingService,
+    @inject(TOKENS.webhookService) webhookService: WebhookService,
+    @inject(TOKENS.expiryService) expiryService: ExpiryService,
+    @inject(TOKENS.purgeService) purgeService: PurgeService,
+    @inject(TOKENS.clock) clock: Clock,
+    @inject(TOKENS.logger) logger: Logger,
+    @inject(TOKENS.config) config: Config,
+    @inject(TOKENS.workerMetrics) workerMetrics: WorkerMetrics,
   ) {
-    this.jobs = c.jobRepository;
-    this.processing = c.processingService;
-    this.webhooks = c.webhookService;
-    this.expiry = c.expiryService;
-    this.purge = c.purgeService;
-    this.clock = c.clock;
-    this.logger = c.logger;
-    this.config = c.config;
-    this.metrics = c.workerMetrics;
+    this.jobs = jobRepository;
+    this.processing = processingService;
+    this.webhooks = webhookService;
+    this.expiry = expiryService;
+    this.purge = purgeService;
+    this.clock = clock;
+    this.logger = logger;
+    this.config = config;
+    this.metrics = workerMetrics;
   }
 
   /** Claim and run one job. Returns false when the queue is empty. Used by tests directly. */

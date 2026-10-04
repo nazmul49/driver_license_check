@@ -1,22 +1,21 @@
 import 'dotenv/config';
 import { createServer } from 'node:http';
-import { asValue } from 'awilix';
 import { loadConfigOrExit } from './config/index.js';
-import { createContainer } from './container.js';
+import { createContainer, deps, disposeContainer, TOKENS } from './container.js';
 import { TesseractPool } from './modules/ocr/ocr-pool.js';
 
 const config = loadConfigOrExit();
 const container = createContainer(config);
-const { logger, workerMetrics } = container.cradle;
+const { logger, workerMetrics } = deps(container);
 
 const ocr = await TesseractPool.create({
   size: config.OCR_POOL_SIZE,
   tessdataDir: config.TESSDATA_DIR,
 });
-container.register({ ocrEngine: asValue(ocr) });
+container.rebind(TOKENS.ocrEngine).toConstantValue(ocr);
 logger.info({ pool_size: config.OCR_POOL_SIZE }, 'ocr pool ready');
 
-const runner = container.cradle.jobRunner;
+const runner = deps(container).jobRunner;
 runner.start();
 
 // Processing metrics (histograms) are exposed by each worker on its own port.
@@ -38,7 +37,7 @@ const shutdown = async (signal: string) => {
   await runner.stop();
   metricsServer?.close();
   await ocr.terminate();
-  await container.dispose();
+  await disposeContainer(container);
   process.exit(0);
 };
 process.on('SIGTERM', () => void shutdown('SIGTERM'));

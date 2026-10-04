@@ -1,6 +1,6 @@
 import cookieParser from 'cookie-parser';
 import express, { type Express } from 'express';
-import type { Container } from './container.js';
+import { deps, type Container } from './container.js';
 import { safeEqual } from './lib/crypto.js';
 import { AppError } from './lib/errors.js';
 import { apiKeyAuth } from './middleware/auth.js';
@@ -16,7 +16,7 @@ import { sessionRouter } from './modules/sessions/session.routes.js';
 
 /** Express app factory without listen(), so tests can drive it with supertest. */
 export function createApp(container: Container): Express {
-  const c = container.cradle;
+  const c = deps(container);
   const { config } = c;
   const app = express();
   app.disable('x-powered-by');

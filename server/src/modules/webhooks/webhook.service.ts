@@ -1,5 +1,6 @@
+import { inject, injectable } from 'inversify';
+import { TOKENS } from '../../di/tokens.js';
 import type { WebhookBody } from '@dlc/shared';
-import type { Cradle } from '../../container.js';
 import type { Clock } from '../../lib/clock.js';
 import { newId } from '../../lib/ids.js';
 import type { Logger } from '../../lib/logger.js';
@@ -17,6 +18,7 @@ export const WEBHOOK_TIMEOUT_MS = 10_000;
 
 export type HttpFetch = typeof fetch;
 
+@injectable()
 export class WebhookService {
   private readonly sessions: SessionRepository;
   private readonly integratorRepo: IntegratorRepository;
@@ -28,26 +30,23 @@ export class WebhookService {
   private readonly http: HttpFetch;
 
   constructor(
-    c: Pick<
-      Cradle,
-      | 'sessionRepository'
-      | 'integratorRepository'
-      | 'integratorService'
-      | 'webhookRepository'
-      | 'jobRepository'
-      | 'clock'
-      | 'logger'
-      | 'httpFetch'
-    >,
+    @inject(TOKENS.sessionRepository) sessionRepository: SessionRepository,
+    @inject(TOKENS.integratorRepository) integratorRepository: IntegratorRepository,
+    @inject(TOKENS.integratorService) integratorService: IntegratorService,
+    @inject(TOKENS.webhookRepository) webhookRepository: WebhookRepository,
+    @inject(TOKENS.jobRepository) jobRepository: JobRepository,
+    @inject(TOKENS.clock) clock: Clock,
+    @inject(TOKENS.logger) logger: Logger,
+    @inject(TOKENS.httpFetch) httpFetch: HttpFetch,
   ) {
-    this.sessions = c.sessionRepository;
-    this.integratorRepo = c.integratorRepository;
-    this.integrators = c.integratorService;
-    this.deliveries = c.webhookRepository;
-    this.jobs = c.jobRepository;
-    this.clock = c.clock;
-    this.logger = c.logger;
-    this.http = c.httpFetch;
+    this.sessions = sessionRepository;
+    this.integratorRepo = integratorRepository;
+    this.integrators = integratorService;
+    this.deliveries = webhookRepository;
+    this.jobs = jobRepository;
+    this.clock = clock;
+    this.logger = logger;
+    this.http = httpFetch;
   }
 
   /** One delivery attempt. Schedules the next attempt itself on failure. */

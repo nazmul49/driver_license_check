@@ -1,7 +1,6 @@
 import os from 'node:os';
 import { readdir } from 'node:fs/promises';
-import { asValue } from 'awilix';
-import { createContainer } from '../src/container.js';
+import { createContainer, deps, disposeContainer, TOKENS } from '../src/container.js';
 import { TesseractPool } from '../src/modules/ocr/ocr-pool.js';
 import { testConfig } from '../test/helpers/config.js';
 import { SPEC_EXAMPLE_PROFILE } from '../test/helpers/documents.js';
@@ -18,8 +17,8 @@ const [sessions = 60, concurrency = 10, poolSize = Math.max(1, os.cpus().length 
 
 const container = createContainer(testConfig(), { countryProfiles: [SPEC_EXAMPLE_PROFILE] });
 const pool = await TesseractPool.create({ size: poolSize, tessdataDir: TESSDATA });
-container.register({ ocrEngine: asValue(pool) });
-const analyzer = container.cradle.documentAnalyzer;
+container.rebind(TOKENS.ocrEngine).toConstantValue(pool);
+const analyzer = deps(container).documentAnalyzer;
 
 const names = (await readdir(FIXTURES)).sort();
 const fixtures = await Promise.all(names.map((n) => loadFixture(n)));
@@ -63,4 +62,4 @@ console.log(
   ),
 );
 await pool.terminate();
-await container.dispose();
+await disposeContainer(container);

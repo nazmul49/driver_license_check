@@ -1,3 +1,5 @@
+import { inject, injectable } from 'inversify';
+import { TOKENS } from '../../di/tokens.js';
 import type { Db } from '../../db/knex.js';
 import { newId } from '../../lib/ids.js';
 import type { CheckResult } from '../checks/types.js';
@@ -15,12 +17,9 @@ export interface ExtractionRow {
   ocr_mean_confidence: number | null;
 }
 
+@injectable()
 export class ResultRepository {
-  private readonly db: Db;
-
-  constructor({ db }: { db: Db }) {
-    this.db = db;
-  }
+  constructor(@inject(TOKENS.db) private readonly db: Db) {}
 
   async saveExtraction(row: ExtractionRow, now: Date): Promise<void> {
     await this.db('extraction_result')

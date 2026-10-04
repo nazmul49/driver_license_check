@@ -1,8 +1,7 @@
 import { readFile, readdir } from 'node:fs/promises';
 import path from 'node:path';
-import { asValue } from 'awilix';
 import { afterAll, describe, expect, it } from 'vitest';
-import { createContainer } from '../../src/container.js';
+import { createContainer, deps, disposeContainer, TOKENS } from '../../src/container.js';
 import { testConfig } from '../helpers/config.js';
 import { SPEC_EXAMPLE_PROFILE } from '../helpers/documents.js';
 import { FIXTURES, closeSharedPool, loadFixture, sharedPool } from '../helpers/ocr.js';
@@ -34,8 +33,8 @@ describe('OCR field accuracy', () => {
       min_field_accuracy: number;
     };
     const container = createContainer(testConfig(), { countryProfiles: [SPEC_EXAMPLE_PROFILE] });
-    container.register({ ocrEngine: asValue(await sharedPool()) });
-    const analyzer = container.cradle.documentAnalyzer;
+    container.rebind(TOKENS.ocrEngine).toConstantValue(await sharedPool());
+    const analyzer = deps(container).documentAnalyzer;
 
     let total = 0;
     let correct = 0;
@@ -58,7 +57,7 @@ describe('OCR field accuracy', () => {
         else misses.push(`${name}.category.${cat.code}`);
       }
     }
-    await container.dispose();
+    await disposeContainer(container);
     const accuracy = correct / total;
     process.stderr.write(
       `OCR field accuracy: ${(accuracy * 100).toFixed(1)}% (${correct}/${total})${misses.length ? `, misses: ${misses.join(', ')}` : ''}\n`,

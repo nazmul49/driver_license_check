@@ -8,7 +8,7 @@ import { mkdirSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { loadConfig } from '../src/config/index.js';
-import { createContainer } from '../src/container.js';
+import { createContainer, deps, disposeContainer } from '../src/container.js';
 import { createDb } from '../src/db/knex.js';
 
 const TABLES = [
@@ -51,7 +51,7 @@ try {
 
 const container = createContainer(config);
 try {
-  const svc = container.cradle.integratorService;
+  const svc = deps(container).integratorService;
   const base = { return_url_hosts: ['integrator.test'], retention_days: 30 };
   const reopen = await svc.createIntegrator({
     ...base,
@@ -74,5 +74,5 @@ try {
   });
   console.log(`e2e database ready, keys written to ${path.relative(repoRoot, outFile)}`);
 } finally {
-  await container.dispose();
+  await disposeContainer(container);
 }

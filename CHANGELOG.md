@@ -2,6 +2,11 @@
 
 All notable changes. Milestones follow SPEC.md section 16.
 
+## Unreleased
+
+- Dependency injection moved from awilix to inversify 8 (`@injectable()` classes, explicit `@inject(TOKENS.x)` constructor parameters, tokens and the `Deps` type in `server/src/di/tokens.ts`). `container.cradle` is replaced by `deps(container)` and `container.dispose()` by `disposeContainer(container)`. `experimentalDecorators` is enabled in `server/tsconfig.json`; e2e scripts started from the repo root now pass `--tsconfig server/tsconfig.json` to tsx.
+- Removed the `braces` audit exception: it was only reachable through awilix, which is no longer a dependency.
+
 ## Deployment (2026-10-03)
 
 - `deploy/`: single-VM production stack (Caddy with automatic HTTPS, API, worker, MySQL 8 on an internal network, `/metrics` blocked at the proxy, log rotation), `init-env.sh` secret generator that never overwrites set values, and `backup.sh` (MySQL dump plus image volume, 7 days).

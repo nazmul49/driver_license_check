@@ -1,20 +1,20 @@
 import 'dotenv/config';
 import { createApp } from './app.js';
 import { loadConfigOrExit } from './config/index.js';
-import { createContainer } from './container.js';
+import { createContainer, deps, disposeContainer } from './container.js';
 
 const config = loadConfigOrExit();
 const container = createContainer(config);
 const app = createApp(container);
 
 const server = app.listen(config.PORT, () => {
-  container.cradle.logger.info({ port: config.PORT }, 'api listening');
+  deps(container).logger.info({ port: config.PORT }, 'api listening');
 });
 
 const shutdown = (signal: string) => {
-  container.cradle.logger.info({ signal }, 'api shutting down');
+  deps(container).logger.info({ signal }, 'api shutting down');
   server.close(() => {
-    void container.dispose().finally(() => process.exit(0));
+    void disposeContainer(container).finally(() => process.exit(0));
   });
   setTimeout(() => process.exit(1), 10_000).unref();
 };

@@ -1,3 +1,5 @@
+import { inject, injectable } from 'inversify';
+import { TOKENS } from '../../di/tokens.js';
 import type { Db } from '../../db/knex.js';
 
 export type JobType = 'process_session' | 'deliver_webhook';
@@ -13,12 +15,9 @@ export interface Job {
  * MySQL-backed job queue (SPEC 4). Claiming uses SELECT ... FOR UPDATE SKIP LOCKED so several
  * workers can poll the same table without handing the same job to two of them.
  */
+@injectable()
 export class JobRepository {
-  private readonly db: Db;
-
-  constructor({ db }: { db: Db }) {
-    this.db = db;
-  }
+  constructor(@inject(TOKENS.db) private readonly db: Db) {}
 
   async enqueue(
     type: JobType,

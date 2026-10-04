@@ -1,4 +1,6 @@
-import type { Cradle } from '../../container.js';
+import { inject, injectable } from 'inversify';
+import { TOKENS } from '../../di/tokens.js';
+import type { Config } from '../../config/index.js';
 import type { Clock } from '../../lib/clock.js';
 import type { Logger } from '../../lib/logger.js';
 import type { ImageService } from '../images/image.service.js';
@@ -15,6 +17,7 @@ const DAY = 86_400_000;
  * Removes personal data. Used by DELETE /v1/sessions/:id and by the hourly purge job
  * (SPEC 12 retention rules).
  */
+@injectable()
 export class PurgeService {
   private readonly sessions: SessionRepository;
   private readonly images: ImageService;
@@ -23,17 +26,14 @@ export class PurgeService {
   private readonly logger: Logger;
   private readonly settings: RetentionSettings;
 
-  constructor({
-    sessionRepository,
-    imageService,
-    resultRepository,
-    clock,
-    logger,
-    config,
-  }: Pick<
-    Cradle,
-    'sessionRepository' | 'imageService' | 'resultRepository' | 'clock' | 'logger' | 'config'
-  >) {
+  constructor(
+    @inject(TOKENS.sessionRepository) sessionRepository: SessionRepository,
+    @inject(TOKENS.imageService) imageService: ImageService,
+    @inject(TOKENS.resultRepository) resultRepository: ResultRepository,
+    @inject(TOKENS.clock) clock: Clock,
+    @inject(TOKENS.logger) logger: Logger,
+    @inject(TOKENS.config) config: Config,
+  ) {
     this.sessions = sessionRepository;
     this.images = imageService;
     this.results = resultRepository;
