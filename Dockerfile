@@ -1,4 +1,4 @@
-FROM node:22-bookworm-slim AS build
+FROM node:24-bookworm-slim AS build
 WORKDIR /app
 COPY package.json package-lock.json ./
 COPY shared/package.json shared/
@@ -9,7 +9,7 @@ RUN npm ci
 COPY . .
 RUN npm run build -w hosted-page
 
-FROM node:22-bookworm-slim
+FROM node:24-bookworm-slim
 ENV NODE_ENV=production TZ=UTC
 # Fonts are only needed for generating synthetic fixtures; OCR does not need them.
 WORKDIR /app
