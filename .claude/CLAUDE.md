@@ -21,7 +21,7 @@ Hard constraints that shape everything:
 
 ## Stack and layout
 
-TypeScript `strict` everywhere, Node 22 LTS, npm workspaces monorepo:
+TypeScript `strict` everywhere, Node 24 LTS, npm workspaces monorepo:
 
 - `shared/`: Zod schemas, DTOs, enums, check codes. Single source of the API contract; server and hosted page both import it.
 - `database/`: the schema, set up like the Sharebox `database` project. `Dockerfile` (mysql:8.0 + `dlc.cnf`, `scripts/` copied into `/docker-entrypoint-initdb.d`), `docker-compose.yml` (local `mysql` service, included by the root compose; both use project name `dlc-dev`), `build_db.sh` (rebuild from scratch, wipes the volume). Scripts in filename order: `0-dlc_init_setup.sql` (test databases, Docker only), `1-structure.sql` (release 1.0.0), then `AA-migration-release-X.Y.Z.sql`, each starting with `INSERT INTO db_version(release_version, ...)`. No rollback, fix forward, never edit an applied script. Existing databases (tests, e2e, prod) are updated by the runner `@dlc/database` via `npm run migrate` / `server/src/db/schema.ts`. See `database/README.md`.

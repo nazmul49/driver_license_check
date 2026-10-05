@@ -9,7 +9,7 @@
     "hosted-page"
   ],
   "engines": {
-    "node": ">=22"
+    "node": ">=24"
   },
   "scripts": {
     "build": "npm run build -w hosted-page",
